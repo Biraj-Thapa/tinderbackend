@@ -1,0 +1,16 @@
+{
+  "name": "tinderbackend",
+  "version": "1.0.0",
+  "description": "This is Tinder backend using express js mongodb",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.9.3"
+  }
+}
