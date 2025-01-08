@@ -1,6 +1,7 @@
 const express=require("express");
 const db=require("./config/database")
 const app=express();
+const User=require("./models/user")
 
 const port=4623
 
