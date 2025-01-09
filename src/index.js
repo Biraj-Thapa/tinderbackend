@@ -4,8 +4,18 @@ const app=express();
 const User=require("./models/user")
 
 const port=4623
+app.use(express.json())
+app.post("/signup",async (req,res)=>{
+    //creating new instance of user model
+    const user=new User(req.body)
+    try{
+        await user.save()
+        res.status(201).send("user added successful")
 
-app.post("/signup",(req,res)=>{
+    }
+    catch(err){
+        res.status(400).send(err.message)
+    }
 
 })
 
