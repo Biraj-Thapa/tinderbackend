@@ -5,11 +5,12 @@ const User = require("./models/user");
 const validateSignUpData = require("./utils/validation");
 const bycrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
-var jwt = require('jsonwebtoken');
+var jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 const port = 4623;
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
 app.post("/signup", async (req, res) => {
   //creating new instance of user model
   try {
@@ -32,116 +33,37 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/login", async(req,res)=>{
-  
-  
-  try{
-    const {emailId,password}=req.body;
-    const user=await User.findOne({emailId})
-    if(!user){
-      res.status(404).send("user not found")
-
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      res.status(404).send("user not found");
     }
-    const isPasswordValid=await bycrypt.compare(password,user.password)
+    const isPasswordValid = await bycrypt.compare(password, user.password);
 
-    if(isPasswordValid){
-      const token= await jwt.sign({ _id: user._id }, "abcdefghij")
-      res.cookie("token", token)
-      res.send("login successfull")
+    if (isPasswordValid) {
+      const token = await jwt.sign({ _id: user._id }, "abcdefghij");
+      res.cookie("token", token);
+      res.send("login successfull");
+    } else {
+      res.status(400).send("Enter correct password");
     }
-    else{
-      res.status(400).send("Enter correct password")
-
-    }
-   
+  } catch (err) {
+    res.status(500).send(err.message);
   }
-  catch(err){
-    res.status(500).send(err.message)
-  }
-})
+});
 
-app.get("/profile", async(req,res)=>{
-  try{const cookies=req.cookies
-  const {token}=cookies
-
-  if(!token){
-    throw new Error("Invalid Token")
-  }
-
-  const decodedMessage= await jwt.verify(token,"abcdefghij")
-
-  const {_id}=decodedMessage
-
-  const user= await User.findById(_id)
-  if(!user){
-    throw new Error("No user Found")
-  }
-
-
-  console.log(decodedMessage)
-  res.send(user)}
-  catch(err){
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user);
+  } catch (err) {
     res.status(400).send(err.message);
-
-  }
-
-})
-
-//Get user By Email
-
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-
-  try {
-    const users = await User.find({ emailId: userEmail });
-    if (!users) {
-      res.status(404).send("User not found");
-    } else {
-      res.send(users);
-    }
-  } catch (err) {
-    res.status(500).send(err.message);
   }
 });
 
-app.get("/feed", async (req, res) => {
-  try {
-    const feed = await User.find();
-    res.send(feed);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
 
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
-  const data = req.body;
-  try {
-    const user = await User.findByIdAndUpdate({ _id: userId }, data);
-
-    if (!user) {
-      res.status(400).send("user not found");
-    } else {
-      res.send("updated successfully");
-    }
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete(userId);
-    if (!user) {
-      res.status(400).send("user not found");
-    } else {
-      res.send("user deleted successfully");
-    }
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
 
 db()
   .then(() => {
