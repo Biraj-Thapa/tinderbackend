@@ -4,9 +4,12 @@ const app = express();
 const User = require("./models/user");
 const validateSignUpData = require("./utils/validation");
 const bycrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+var jwt = require('jsonwebtoken');
 
 const port = 4623;
 app.use(express.json());
+app.use(cookieParser())
 app.post("/signup", async (req, res) => {
   //creating new instance of user model
   try {
@@ -42,6 +45,8 @@ app.post("/login", async(req,res)=>{
     const isPasswordValid=await bycrypt.compare(password,user.password)
 
     if(isPasswordValid){
+      const token= await jwt.sign({ _id: user._id }, "abcdefghij")
+      res.cookie("token", token)
       res.send("login successfull")
     }
     else{
@@ -53,6 +58,33 @@ app.post("/login", async(req,res)=>{
   catch(err){
     res.status(500).send(err.message)
   }
+})
+
+app.get("/profile", async(req,res)=>{
+  try{const cookies=req.cookies
+  const {token}=cookies
+
+  if(!token){
+    throw new Error("Invalid Token")
+  }
+
+  const decodedMessage= await jwt.verify(token,"abcdefghij")
+
+  const {_id}=decodedMessage
+
+  const user= await User.findById(_id)
+  if(!user){
+    throw new Error("No user Found")
+  }
+
+
+  console.log(decodedMessage)
+  res.send(user)}
+  catch(err){
+    res.status(400).send(err.message);
+
+  }
+
 })
 
 //Get user By Email
