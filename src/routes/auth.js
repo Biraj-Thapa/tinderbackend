@@ -1,9 +1,10 @@
 const express = require("express");
 const authRouter = express.Router();
 const bycrypt = require("bcrypt");
-var jwt = require("jsonwebtoken");
 const validateSignUpData = require("../utils/validation")
 const User = require("../models/user");
+const jwt=require("jsonwebtoken")
+
 
 
 authRouter.post("/signup", async (req, res) => {
@@ -38,9 +39,12 @@ authRouter.post("/login", async (req, res) => {
     const isPasswordValid = await bycrypt.compare(password, user.password);
 
     if (isPasswordValid) {
-      const token = await jwt.getJWT();
-      res.cookie("token", token);
-      res.send("login successfull");
+   
+
+      const token = await jwt.sign({ _id: user._id }, "abcdefghij");
+      res.cookie("token", token, { httpOnly: true });
+      return res.send("Login successful");
+
     } else {
       res.status(400).send("Enter correct password");
     }
@@ -48,5 +52,13 @@ authRouter.post("/login", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+authRouter.post("/logout", async(req,res)=>{
+
+  res.cookie("token",null,{
+     expires: new Date(Date.now())
+  })
+  res.send("Logout successfull")
+})
 
 module.exports = authRouter;
